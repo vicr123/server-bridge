@@ -1,0 +1,26 @@
+{
+  "name": "server-bridge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bridge.js",
+  "dependencies": {
+    "http-proxy": "^1.18.0",
+    "moment": "^2.24.0",
+    "ocsp": "^1.2.0",
+    "ws": "^7.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vicr123/server-bridge.git"
+  },
+  "author": "Victor Tran",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/vicr123/server-bridge/issues"
+  },
+  "homepage": "https://github.com/vicr123/server-bridge#readme"
+}
