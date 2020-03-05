@@ -9,6 +9,9 @@ let logger = new Logger();
 const Proxy = require("./proxy");
 let proxy = new Proxy(config);
 
+const OCSP = require("./ocsp");
+let ocsp = new OCSP();
+
 //Get the HOST header
 function getHost(req, res, next) {
     let host = req.headers.host;
@@ -44,7 +47,7 @@ http.createServer((req, res) => {
         if (config.ssl && config.ssl.autopromote) {
             res.writeHead(301, {
                 "Content-Type": 'text/html',
-                "Location": "https://" + req.host + (config.ssl.autopromote === 443 ? "" : ":" + config.ssl.autopromote) + req.url
+                "Location": `https://${req.host}${config.ssl.autopromote === 443 ? "" : `:${config.ssl.autopromote}`}${req.url}`
             });
             res.end();
         } else {
@@ -62,5 +65,10 @@ if (config.ssl) {
         getHost(req, res, () => {
             proxy.handle(req, res);
         });
-    }).on('upgrade', upgrade).listen(config.ports.https);
+    })
+    .on('upgrade', upgrade)
+    .on("OCSPRequest", (certificate, issuer, callback) => {
+        ocsp.handle(certificate, issuer, callback);
+    })
+    .listen(config.ports.https);
 }
