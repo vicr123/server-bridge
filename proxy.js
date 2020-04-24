@@ -10,39 +10,43 @@ class Proxy {
         this.#proxy = {};
         
         for (let [host, redirect] of Object.entries(config.redirects)) {
-            let options = {
-                preserveHeaderKeyCase: true,
-                xfwd: true,
-                selfHandleResponse: true
-            };
-            
+            let proxy;
             if (Number.isInteger(redirect)) {
-                options.target = {
+                proxy = httpProxy.createProxyServer({
+                    preserveHeaderKeyCase: true,
+                    xfwd: true,
+                    selfHandleResponse: true,
                     host: "localhost",
                     port: redirect
-                };
+                });
+                proxy.on("error", (err, req, res) => {
+                    console.log(err);
+                    res.writeHead(502, {
+                        'Content-Type': 'text/plain'
+                    });
+                    res.write("Sorry, looks like something isn't working right on our end. Give it a few minutes and try again.");
+                    res.end();
+                });
+                proxy.on("proxyReq", (proxyReq, req, res) => {
+                    proxyReq.setHeader("X-Forwarded-Proto", req.connection.encrypted ? "https" : "http");
+                });
+                proxy.on("proxyRes", (proxyRes, req, res) => {
+                    let headers = proxyRes.headers;
+                    res.writeHead(proxyRes.statusCode, headers);
+                    proxyRes.on('data', chunk => res.write(chunk));
+                    proxyRes.on('end', () => res.end());
+                });
             } else {
-                options.target = redirect.location;
+                proxy = {
+                    web: (req, res) {
+                        res.writeHead(301, {
+                            location: redirect.location
+                        });
+                        response.end();
+                    }
+                };
             }
             
-            let proxy = httpProxy.createProxyServer(options);
-            proxy.on("error", (err, req, res) => {
-                console.log(err);
-                res.writeHead(502, {
-                    'Content-Type': 'text/plain'
-                });
-                res.write("Sorry, looks like something isn't working right on our end. Give it a few minutes and try again.");
-                res.end();
-            });
-            proxy.on("proxyReq", (proxyReq, req, res) => {
-                proxyReq.setHeader("X-Forwarded-Proto", req.connection.encrypted ? "https" : "http");
-            });
-            proxy.on("proxyRes", (proxyRes, req, res) => {
-                let headers = proxyRes.headers;
-                res.writeHead(proxyRes.statusCode, headers);
-                proxyRes.on('data', chunk => res.write(chunk));
-                proxyRes.on('end', () => res.end());
-            });
             this.#proxy[host] = proxy;
         }
     }
