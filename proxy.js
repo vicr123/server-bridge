@@ -38,7 +38,7 @@ class Proxy {
                 });
             } else {
                 proxy = {
-                    web: (req, res) {
+                    web: (req, res) => {
                         res.writeHead(301, {
                             location: redirect.location
                         });
