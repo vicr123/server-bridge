@@ -16,8 +16,10 @@ class Proxy {
                     preserveHeaderKeyCase: true,
                     xfwd: true,
                     selfHandleResponse: true,
-                    host: "localhost",
-                    port: redirect
+                    target: {
+                        host: "localhost",
+                        port: redirect
+                    }
                 });
                 proxy.on("error", (err, req, res) => {
                     console.log(err);
@@ -42,7 +44,7 @@ class Proxy {
                         res.writeHead(301, {
                             location: redirect.location
                         });
-                        response.end();
+                        res.end();
                     }
                 };
             }
