@@ -35,8 +35,9 @@ class Proxy {
                 proxy.on("proxyRes", (proxyRes, req, res) => {
                     let headers = proxyRes.headers;
                     res.writeHead(proxyRes.statusCode, headers);
-                    proxyRes.on('data', chunk => res.write(chunk));
-                    proxyRes.on('end', () => res.end());
+                    proxyRes.pipe(res);
+                    // proxyRes.on('data', chunk => res.write(chunk));
+                    // proxyRes.on('end', () => res.end());
                 });
             } else {
                 proxy = {
