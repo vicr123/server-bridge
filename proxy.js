@@ -14,7 +14,7 @@ class Proxy {
             if (Number.isInteger(redirect) || redirect.proxy) {
                 let host = redirect.host || "localhost";
                 let port = Number.isInteger(redirect) ? redirect : redirect.port;
-                let https = redirect.https || false;
+                let protocol = redirect.https ? "https" : "http";
                 
                 proxy = httpProxy.createProxyServer({
                     preserveHeaderKeyCase: true,
