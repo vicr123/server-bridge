@@ -36,6 +36,9 @@ class Proxy {
                 });
                 proxy.on("proxyReq", (proxyReq, req, res) => {
                     proxyReq.setHeader("X-Forwarded-Proto", req.connection.encrypted ? "https" : "http");
+                    if (redirect.rewriteHost) {
+                        proxyReq.setHeader("Host", redirect.rewriteHost);
+                    }
                 });
                 proxy.on("proxyRes", (proxyRes, req, res) => {
                     let headers = proxyRes.headers;
