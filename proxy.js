@@ -23,7 +23,9 @@ class Proxy {
                     target: {
                         host: host,
                         port: port,
-                        https: https
+                        target: {
+                            https: https
+                        }
                     }
                 });
                 proxy.on("error", (err, req, res) => {
