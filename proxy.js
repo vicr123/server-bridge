@@ -11,14 +11,19 @@ class Proxy {
         
         for (let [host, redirect] of Object.entries(config.redirects)) {
             let proxy;
-            if (Number.isInteger(redirect)) {
+            if (Number.isInteger(redirect) || redirect.proxy) {
+                let host = redirect.host || "localhost";
+                let port = Number.isInteger(redirect) ? redirect : redirect.port;
+                let https = redirect.https || false;
+                
                 proxy = httpProxy.createProxyServer({
                     preserveHeaderKeyCase: true,
                     xfwd: true,
                     selfHandleResponse: true,
                     target: {
-                        host: "localhost",
-                        port: redirect
+                        host: host,
+                        port: port,
+                        https: https
                     }
                 });
                 proxy.on("error", (err, req, res) => {
