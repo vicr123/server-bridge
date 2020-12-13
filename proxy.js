@@ -21,11 +21,9 @@ class Proxy {
                     xfwd: true,
                     selfHandleResponse: true,
                     target: {
+                        protocol: protocol,
                         host: host,
-                        port: port,
-                        target: {
-                            https: https
-                        }
+                        port: port
                     }
                 });
                 proxy.on("error", (err, req, res) => {
