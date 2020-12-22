@@ -91,6 +91,7 @@ class Proxy {
                 forwarded = "";
             }
             headers["x-forwarded-for"] = forwarded + req.connection.remoteAddress;
+            if (req.headers["authorization"]) headers["authorization"] = req.headers["authorization"];
         
             let wsConnection = new ws(`ws://localhost:${redirect}${req.url}`, [], {
                 headers: headers
