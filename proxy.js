@@ -52,7 +52,7 @@ class Proxy {
                 proxy = {
                     web: (req, res) => {
                         res.writeHead(301, {
-                            location: `${redirect.location}/${req.path}`
+                            location: `${redirect.location}/${req.url}`
                         });
                         res.end();
                     }
