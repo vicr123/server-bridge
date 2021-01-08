@@ -1,5 +1,6 @@
 const httpProxy = require("http-proxy");
 const ws = require("ws");
+const path = require("path");
 
 class Proxy {
     #proxy;
@@ -51,7 +52,7 @@ class Proxy {
                 proxy = {
                     web: (req, res) => {
                         res.writeHead(301, {
-                            location: redirect.location
+                            location: `${redirect.location}/${req.path}`
                         });
                         res.end();
                     }
