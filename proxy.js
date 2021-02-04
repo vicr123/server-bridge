@@ -51,8 +51,16 @@ class Proxy {
             } else {
                 proxy = {
                     web: (req, res) => {
+                        let location = redirect.location;
+                        if (req.url !== "/") {
+                            if (!req.url.startsWith("/")) {
+                                location += "/";
+                            }
+                            location += req.url;
+                        }
+
                         res.writeHead(301, {
-                            location: `${redirect.location}/${req.url}`
+                            location: location
                         });
                         res.end();
                     }
