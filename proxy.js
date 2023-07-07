@@ -93,8 +93,12 @@ class Proxy {
         let redirect = this.#config.redirects[req.host];
         if (!redirect) {
             socket.end();
-        } else if (Number.isInteger(redirect)) {
-            let headers = {};
+        } else if (Number.isInteger(redirect) || redirect.proxy) {
+            let host = redirect.host || "localhost";
+            let port = Number.isInteger(redirect) ? redirect : redirect.port;
+            let scheme = redirect.https ? "wss" : "ws";
+            let protocols = [];
+            let headers = {...req.headers};
         
             let forwarded = req.headers["x-forwarded-for"];
             if (forwarded) {
@@ -102,11 +106,20 @@ class Proxy {
             } else {
                 forwarded = "";
             }
+
+            let wsProtocols = req.headers["sec-websocket-protocol"];
+            if (wsProtocols) {
+                protocols = wsProtocols.split(",");
+            }
+
             headers["x-forwarded-for"] = forwarded + req.connection.remoteAddress;
-            if (req.headers["authorization"]) headers["authorization"] = req.headers["authorization"];
+            delete headers["sec-websocket-key"];
+            delete headers["sec-websocket-protocol"];
+            delete headers["sec-websocket-version"];
         
-            let wsConnection = new ws(`ws://localhost:${redirect}${req.url}`, [], {
-                headers: headers
+            let wsConnection = new ws(`ws://${host}:${port}${req.url}`, protocols, {
+                headers: headers,
+
             });
             wsConnection.on("open", function() {
                 let wsServer = new ws.Server({
@@ -136,7 +149,7 @@ class Proxy {
                 });
             });
             wsConnection.on("unexpected-response", function(req, res) {
-                socket.write(`HTTP/1.1 ${req.statusCode} ${req.statusMessage}\r\n\r\n`);
+                socket.write(`HTTP/1.1 ${res.statusCode} ${res.statusMessage}\r\n\r\n`);
                 socket.end();
             });
             wsConnection.on("error", function(err) {
