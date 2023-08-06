@@ -57,18 +57,36 @@ http.createServer((req, res) => {
 }).on('upgrade', upgrade).listen(config.ports.http);
 
 if (config.ssl) {
-    https.createServer({
+    let options = {
         key: fs.readFileSync(config.ssl.key),
         cert: fs.readFileSync(config.ssl.cert)
-    }, (req, res) => {
+    };
+
+    if (config.ssl.mtls?.ca) {
+        options.ca = fs.readFileSync(config.ssl.mtls.ca);
+        options.requestCert = true;
+        options.rejectUnauthorized = false;
+    }
+
+    let server = https.createServer(options, (req, res) => {
         logger.track(req, res);
         getHost(req, res, () => {
+            if (!req.client.authorized && config.ssl.mtls?.ca) {
+                res.writeHead(404, {'Content-Type': 'text/html'});
+                res.write(`Client certificate not valid`);
+                res.end();
+
+                return;
+            }
             proxy.handle(req, res);
         });
     })
     .on('upgrade', upgrade)
-    .on("OCSPRequest", (certificate, issuer, callback) => {
-        ocsp.handle(certificate, issuer, callback);
-    })
     .listen(config.ports.https);
+
+    if (!config.ssl.noocsp) {
+        server.on("OCSPRequest", (certificate, issuer, callback) => {
+            ocsp.handle(certificate, issuer, callback);
+        })
+    }
 }
