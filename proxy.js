@@ -1,6 +1,7 @@
 const httpProxy = require("http-proxy");
 const ws = require("ws");
 const path = require("path");
+const hsts = require("./hsts");
 
 class Proxy {
     #proxy;
@@ -13,7 +14,7 @@ class Proxy {
         for (let [host, redirect] of Object.entries(config.redirects)) {
             let proxy;
             if (Number.isInteger(redirect) || redirect.proxy) {
-                let host = redirect.host || "localhost";
+                let host = redirect.host || "127.0.0.1";
                 let port = Number.isInteger(redirect) ? redirect : redirect.port;
                 let protocol = redirect.https ? "https" : "http";
                 
@@ -29,9 +30,9 @@ class Proxy {
                 });
                 proxy.on("error", (err, req, res) => {
                     console.log(err);
-                    res.writeHead(502, {
+                    res.writeHead(502, hsts.injectHeaders({
                         'Content-Type': 'text/plain'
-                    });
+                    }));
                     res.write("Sorry, looks like something isn't working right on our end. Give it a few minutes and try again.");
                     res.end();
                 });
@@ -46,7 +47,7 @@ class Proxy {
                 });
                 proxy.on("proxyRes", (proxyRes, req, res) => {
                     let headers = proxyRes.headers;
-                    res.writeHead(proxyRes.statusCode, headers);
+                    res.writeHead(proxyRes.statusCode, hsts.injectHeaders(headers));
                     proxyRes.pipe(res);
                     // proxyRes.on('data', chunk => res.write(chunk));
                     // proxyRes.on('end', () => res.end());
@@ -62,9 +63,9 @@ class Proxy {
                             location += req.url;
                         }
 
-                        res.writeHead(301, {
+                        res.writeHead(301, hsts.injectHeaders({
                             location: location
-                        });
+                        }));
                         res.end();
                     }
                 };
@@ -81,7 +82,7 @@ class Proxy {
     handle(req, res) {
         let proxy = this.getProxy(req.host);
         if (!proxy) {
-            res.writeHead(400, {'Content-Type': 'text/html'});
+            res.writeHead(400, hsts.injectHeaders({'Content-Type': 'text/html'}));
             res.write(`Invalid Host header: ${req.host}`);
             res.end();
         } else {
@@ -118,7 +119,7 @@ class Proxy {
             delete headers["sec-websocket-version"];
         
             let wsConnection = new ws(`ws://${host}:${port}${req.url}`, protocols, {
-                headers: headers,
+                headers: hsts.injectHeaders(headers),
 
             });
             wsConnection.on("open", function() {

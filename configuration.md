@@ -16,18 +16,26 @@ Configuration takes the form of a JSON file, `config.json` stored at the root of
 | https       | number | Port to run HTTPS server on                                                                                           |
 
 ## SSL object
-| Key         | Type        | Description                                                                                                           |
-|-------------|-------------|-----------------------------------------------------------------------------------------------------------------------|
-| key         | string      | Filesystem path to a PEM encoded private key                                                                          |
-| cert        | string      | Filesystem path to a PEM encoded certificate chain                                                                    |
-| autopromote | number      | [optional] Port to automatically promote HTTP connections to. If absent, the bridge will not autopromote connections. |
-| mtls        | MTLS object | [optional] Gives information about whether server-bridge should request client TLS certificates
-| noocsp      | boolean     | [optional] true to disable OCSP Stapling
+| Key                     | Type        | Description                                                                                                           |
+|-------------------------|-------------|-----------------------------------------------------------------------------------------------------------------------|
+| key                     | string      | Filesystem path to a PEM encoded private key                                                                          |
+| cert                    | string      | Filesystem path to a PEM encoded certificate chain                                                                    |
+| autopromote             | number      | [optional] Port to automatically promote HTTP connections to. If absent, the bridge will not autopromote connections. |
+| mtls                    | MTLS object | [optional] Gives information about whether server-bridge should request client TLS certificates                       |
+| noocsp                  | boolean     | [optional] true to disable OCSP Stapling                                                                              |
+| strictTransportSecurity | HSTS object | [optional] Gives information about whether server-bridge should serve up HSTS headers                                 |
 
 ## MTLS object
-| Key         | Type   | Description                                                                                                           |
-|-------------|--------|-----------------------------------------------------------------------------------------------------------------------|
-| ca          | string | Filesystem path to a PEM encoded certificate identifying the CA that issues the client certificates                                                                                            |
+| Key | Type   | Description                                                                                         |
+|-----|--------|-----------------------------------------------------------------------------------------------------|
+| ca  | string | Filesystem path to a PEM encoded certificate identifying the CA that issues the client certificates |
+
+## HSTS object
+| Key        | Type    | Description                                                             |
+|------------|---------|-------------------------------------------------------------------------|
+| maxAge     | number  | Amount of time the browser will remember the HSTS instruction for       |
+| subdomains | boolean | [optional] Whether the HSTS instruction will apply to subdomains or not |
+| preload    | boolean | [optional] Whether to send the preload directive in the HSTS header     |
 
 
 ## Redirects object

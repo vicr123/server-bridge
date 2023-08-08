@@ -12,15 +12,18 @@ let proxy = new Proxy(config);
 const OCSP = require("./ocsp");
 let ocsp = new OCSP();
 
+const hsts = require("./hsts");
+hsts.setConfig(config);
+
 //Get the HOST header
 function getHost(req, res, next) {
     let host = req.headers.host;
 
     if (host == null) {
         if (res != null) {
-            res.writeHead(400, {
+            res.writeHead(400, hsts.injectHeaders({
                 'Content-Type': 'text/html'
-            });
+            }));
             res.write("You'll need to access this page using a domain instead of an IP.");
             res.end();
         }
@@ -45,16 +48,18 @@ http.createServer((req, res) => {
     logger.track(req, res);
     getHost(req, res, () => {
         if (config.ssl && config.ssl.autopromote) {
-            res.writeHead(301, {
+            res.writeHead(301, hsts.injectHeaders({
                 "Content-Type": 'text/html',
                 "Location": `https://${req.host}${config.ssl.autopromote === 443 ? "" : `:${config.ssl.autopromote}`}${req.url}`
-            });
+            }));
             res.end();
         } else {
             proxy.handle(req, res);
         }
     });
-}).on('upgrade', upgrade).listen(config.ports.http);
+}).on('upgrade', upgrade).listen(config.ports.http, () => {
+    console.log(`HTTP running on port ${config.ports.http}`)
+});
 
 if (config.ssl) {
     let options = {
@@ -72,7 +77,7 @@ if (config.ssl) {
         logger.track(req, res);
         getHost(req, res, () => {
             if (!req.client.authorized && config.ssl.mtls?.ca) {
-                res.writeHead(404, {'Content-Type': 'text/html'});
+                res.writeHead(404, hsts.injectHeaders({'Content-Type': 'text/html'}));
                 res.write(`Client certificate not valid`);
                 res.end();
 
@@ -82,7 +87,9 @@ if (config.ssl) {
         });
     })
     .on('upgrade', upgrade)
-    .listen(config.ports.https);
+    .listen(config.ports.https, () => {
+        console.log(`HTTPS running on port ${config.ports.https}`)
+    });
 
     if (!config.ssl.noocsp) {
         server.on("OCSPRequest", (certificate, issuer, callback) => {
